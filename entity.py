@@ -3,3 +3,6 @@ class If_node:
         self.type = type
         self.compare_statement = compare_statement
         self.children: list[If_node] = []
+
+    def __repr__(self) -> str:
+        return f'{self.type}({self.compare_statement})'

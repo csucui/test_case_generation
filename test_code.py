@@ -4,11 +4,11 @@ print('hello world')
 a = 10
 if a == 9:
     if a >= 8:
-        pass
+        print('1111')
 elif a == 10:
-    pass
+    print('22222')
 else:
-    pass
+    print('33333')
 
 def sss():
     return 1

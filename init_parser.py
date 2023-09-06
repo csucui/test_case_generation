@@ -1,4 +1,4 @@
-from tree_sitter import Language, Parser,Node
+from tree_sitter import Language, Parser
 
 PYTHON_LANGUAGE = Language('build/my-languages.so', 'python')
 CPP_LANGUAGE = Language('build/my-languages.so', 'cpp')
@@ -9,7 +9,7 @@ def init_python_parser():
     python_parser.set_language(PYTHON_LANGUAGE)
     return python_parser
 
-def init_app_parser():
+def init_cpp_parser():
     cpp_parser = Parser()
     cpp_parser.set_language(CPP_LANGUAGE)
     return cpp_parser
