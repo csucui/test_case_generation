@@ -2,6 +2,7 @@ from tree_sitter import Language, Parser,Node
 from init_parser import *
 from entity import If_node, Truth_node,TRUE_TO_FALSE
 from z3 import Int,Solver,sat,Z3_parse_smtlib2_string,StringVal
+import re
 
 def format_tree(root: Node,if_tree: If_node):
     '''
@@ -80,8 +81,15 @@ def replace_keys_with_values(string: str, rep_dict: dict):
     if string is None:
         return None
     for key, value in rep_dict.items():
-        string = string.replace(key, value)
+        if key in string:
+            string = string.replace(key, value)
+            break
     return string
+
+def get_variables(s: str):
+    variables = re.findall(r"\b[a-zA-Z]+\b", s)
+    variables = list(filter(lambda x: x not in ['and', 'or'], variables))
+    return variables
 
 PYTHON_LANGUAGE = Language('build/my-languages.so', 'python')
 python_parser = Parser()
@@ -100,7 +108,12 @@ with open('test_code.py', 'r',encoding='utf-8') as f:
         print(f'这是第{i+1}个真值树结构')
         print_truth_tree(trees[i])
     restrictions = get_restrictions(trees)
-    letters = {c for sublist in restrictions for s in sublist for c in s if c.isalpha()}
+    letters = set()
+    for res in restrictions:
+        for r in res:
+            v = get_variables(r)
+            letters.update(v)
+    print(letters)
     variables = {}
     for x in letters:
         variables[x]=Int(x)
