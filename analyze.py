@@ -43,31 +43,33 @@ def format_tree(root: Node, if_tree: If_node, vars: dict[str,str]):
                     format_tree(c.children[2], if_tree.children[-1],deepcopy(vars))
 
 
-def get_truth_trees(root: If_node) -> list[Truth_node]:
-    # 暂时不考虑嵌套
-    def get_tree(root: If_node, tree: Truth_node, where_true: int):
-        l = len(root.children)
-        for n in range(l):
-            if n == where_true:
-                truth_node = Truth_node(root.children[n].type, 1)
-                if root.children[n].compare_statement is not None:
-                    truth_node.restrictions.append(root.children[n].compare_statement)
-                tree.children.append(truth_node)
-            else:
-                truth_node = Truth_node(root.children[n].type, 0)
-                re = replace_keys_with_values(root.children[n].compare_statement, TRUE_TO_FALSE)
-                if re is not None:
-                    truth_node.restrictions.append(re)
-                tree.children.append(truth_node)
-        return tree
+def get_truth_trees(root: If_node):
+    '''
+    使用路径覆盖
+    '''
+    # 考虑嵌套
+    #路径覆盖可以直接获得约束条件
+    def get_re(root: If_node,prefix: list,res: list[list[str]]):
+        if root.compare_statement != None:
+            prefix.append(root.compare_statement)
+        i = root.children.__len__()
+        if i == 0:
+            if prefix != []:
+                res.append(prefix)
+            return
+        for ii in range(i):
+            get_re(root.children[ii],deepcopy(prefix),res)
+            if root.children[ii].compare_statement != None:
+                prefix.append(replace_keys_with_values(root.children[ii].compare_statement,TRUE_TO_FALSE))
 
     l = len(root.children)
-    trees: list[Truth_node] = []
+    res: list[list[str]] = []
+    prefix = [] # 到达这个分支需要的前置条件
     for i in range(l):
-        tree = Truth_node('root', 1)
-        tree = get_tree(root, tree, i)
-        trees.append(tree)
-    return trees
+        get_re(root.children[i],deepcopy(prefix),res)
+        if root.children[i].compare_statement != None:
+            prefix.append(replace_keys_with_values(root.children[i].compare_statement,TRUE_TO_FALSE))
+    return res
 
 
 def get_restrictions(trees: list[Truth_node]):
@@ -128,11 +130,8 @@ with open('test_code.py', 'r', encoding='utf-8') as f:
     if_tree = If_node('module', None)
     format_tree(root_node, if_tree,{})
     print_tree(if_tree)
-    trees = get_truth_trees(if_tree)
-    for i in range(trees.__len__()):
-        print(f'这是第{i + 1}个真值树结构')
-        print_truth_tree(trees[i])
-    restrictions = get_restrictions(trees)
+    restrictions = get_truth_trees(if_tree)
+    print(restrictions)
     letters = set()
     for res in restrictions:
         for r in res:
