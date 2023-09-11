@@ -1,9 +1,12 @@
 
-a = 10
-bb = 0
+a = int(input())
+b = int(input())
+a = a + 1
+b = b + 2
+print(b)
 if a == 9:
     print('1111')
-elif bb >= a+5:
+elif b >= a+5:
     print('22222')
 else:
     print('33333')
