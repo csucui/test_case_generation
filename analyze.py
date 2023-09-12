@@ -1,8 +1,8 @@
 from tree_sitter import Language, Parser, Node
 from init_parser import *
-from entity import If_node, Truth_node, TRUE_TO_FALSE
-from util import merge_var_change
-from z3 import Int, Solver, sat
+from entity import If_node, TRUE_TO_FALSE
+from util import merge_var_change,format_compare
+from z3 import Real, Solver, sat,And,Or,Not,simplify
 import re
 from copy import deepcopy
 
@@ -51,7 +51,7 @@ def get_truth_trees(root: If_node):
     #路径覆盖可以直接获得约束条件
     def get_re(root: If_node,prefix: list,res: list[list[str]]):
         if root.compare_statement != None:
-            prefix.append(root.compare_statement)
+            prefix.append(format_compare(root.compare_statement))
         i = root.children.__len__()
         if i == 0:
             if prefix != []:
@@ -60,7 +60,7 @@ def get_truth_trees(root: If_node):
         for ii in range(i):
             get_re(root.children[ii],deepcopy(prefix),res)
             if root.children[ii].compare_statement != None:
-                prefix.append(replace_keys_with_values(root.children[ii].compare_statement,TRUE_TO_FALSE))
+                prefix.append(f'Not({format_compare(root.children[ii].compare_statement)})')
 
     l = len(root.children)
     res: list[list[str]] = []
@@ -68,34 +68,14 @@ def get_truth_trees(root: If_node):
     for i in range(l):
         get_re(root.children[i],deepcopy(prefix),res)
         if root.children[i].compare_statement != None:
-            prefix.append(replace_keys_with_values(root.children[i].compare_statement,TRUE_TO_FALSE))
+            prefix.append(f'Not({format_compare(root.children[i].compare_statement)})')
     return res
 
-
-def get_restrictions(trees: list[Truth_node]):
-    restrictions: list = []
-    for tree in trees:
-        # 因为没有考虑嵌套的问题，所以目前所有的树都只有一层
-        restriction: list = []
-        for child in tree.children:
-            if child.restrictions is not []:
-                restriction.extend(child.restrictions)
-        restrictions.append(restriction)
-    return restrictions
 
 
 def print_tree(root: If_node, level=0):
     '''
     一个打印if树的方法
-    '''
-    print('  ' * level + repr(root))
-    for child in root.children:
-        print_tree(child, level + 1)
-
-
-def print_truth_tree(root: Truth_node, level=0):
-    '''
-    一个打印真值树的方法
     '''
     print('  ' * level + repr(root))
     for child in root.children:
@@ -114,7 +94,7 @@ def replace_keys_with_values(string: str, rep_dict: dict):
 
 def get_variables(s: str):
     variables = re.findall(r"\b[a-zA-Z]+\b", s)
-    variables = list(filter(lambda x: x not in ['and', 'or'], variables))
+    variables = list(filter(lambda x: x not in ['And','Not','Or'], variables))
     return variables
 
 
@@ -138,13 +118,15 @@ with open('test_code.py', 'r', encoding='utf-8') as f:
             v = get_variables(r)
             letters.update(v)
     print(letters)
-    variables = {}
+    variables = {'And': And,'Or': Or,'Not': Not}
     for x in letters:
-        variables[x] = Int(x)
+        variables[x] = Real(x)
     for res in restrictions:
         s = Solver()
         for r in res:
-            s.add(eval(r, {}, variables))
+            rr = simplify(eval(r, {}, variables))
+            print(rr)
+            s.add(rr)
         if s.check() == sat:
             # 获取一个解
             m = s.model()
