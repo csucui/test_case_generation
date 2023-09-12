@@ -109,23 +109,24 @@ with open('test_code.py', 'r', encoding='utf-8') as f:
     root_node = tree.root_node
     if_tree = If_node('module', None)
     format_tree(root_node, if_tree,{})
-    print_tree(if_tree)
+    # print_tree(if_tree)
     restrictions = get_truth_trees(if_tree)
-    print(restrictions)
+    # print(restrictions)
     letters = set()
     for res in restrictions:
         for r in res:
             v = get_variables(r)
             letters.update(v)
-    print(letters)
+    # print(letters)
     variables = {'And': And,'Or': Or,'Not': Not}
     for x in letters:
         variables[x] = Real(x)
+    print('一组路径覆盖测试用例如下')
     for res in restrictions:
         s = Solver()
         for r in res:
             rr = simplify(eval(r, {}, variables))
-            print(rr)
+            # print(rr)
             s.add(rr)
         if s.check() == sat:
             # 获取一个解
