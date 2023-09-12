@@ -128,6 +128,7 @@ with open('test_code.py', 'r', encoding='utf-8') as f:
             rr = simplify(eval(r, {}, variables))
             # print(rr)
             s.add(rr)
+        print(f'该测试用例约束条件为:{res}')
         if s.check() == sat:
             # 获取一个解
             m = s.model()
