@@ -105,39 +105,37 @@ python_parser = Parser()
 python_parser.set_language(PYTHON_LANGUAGE)
 
 
-def analyze():
-    with open('test_code.py', 'r', encoding='utf-8') as f:
-        result = ''
-        code = f.read()
-        tree = python_parser.parse(bytes(code, "utf8"))
-        # 注意，root_node 才是可遍历的树节点
-        root_node = tree.root_node
-        if_tree = If_node('module', None)
-        format_tree(root_node, if_tree, {})
-        print_tree(if_tree)
-        restrictions = get_truth_trees(if_tree)
-        # print(restrictions)
-        letters = set()
-        for res in restrictions:
-            for r in res:
-                v = get_variables(r)
-                letters.update(v)
-        # print(letters)
-        variables = {'And': And, 'Or': Or, 'Not': Not}
-        for x in letters:
-            variables[x] = Real(x)
-        result = result + '一组路径覆盖测试用例如下\n'
-        for res in restrictions:
-            s = Solver()
-            for r in res:
-                rr = simplify(eval(r, {}, variables))
-                # print(rr)
-                s.add(rr)
-            result = result + f'该测试用例约束条件为:{res}\n'
-            if s.check() == sat:
-                # 获取一个解
-                m = s.model()
-                result = result+str(m)+'\n'
-            else:
-                result = result+"无解\n"
-        return result
+def analyze(code: str):
+    result = ''
+    tree = python_parser.parse(bytes(code, "utf8"))
+    # 注意，root_node 才是可遍历的树节点
+    root_node = tree.root_node
+    if_tree = If_node('module', None)
+    format_tree(root_node, if_tree, {})
+    print_tree(if_tree)
+    restrictions = get_truth_trees(if_tree)
+    # print(restrictions)
+    letters = set()
+    for res in restrictions:
+        for r in res:
+            v = get_variables(r)
+            letters.update(v)
+    # print(letters)
+    variables = {'And': And, 'Or': Or, 'Not': Not}
+    for x in letters:
+        variables[x] = Real(x)
+    result = result + '一组路径覆盖测试用例如下\n'
+    for res in restrictions:
+        s = Solver()
+        for r in res:
+            rr = simplify(eval(r, {}, variables))
+            # print(rr)
+            s.add(rr)
+        result = result + f'该测试用例约束条件为:{res}\n'
+        if s.check() == sat:
+            # 获取一个解
+            m = s.model()
+            result = result + str(m) + '\n'
+        else:
+            result = result + "无解\n"
+    return result

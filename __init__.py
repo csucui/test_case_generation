@@ -11,9 +11,7 @@ def home():
 @app.route('/save_code', methods=['GET', 'POST'])
 def save_code():
     code = request.form.get('code')
-    with open('test_code.py', 'w') as file:
-        file.write(code)
-    res = analyze()
+    res = analyze(code)
     print("Content saved to file.")
     return res
 
